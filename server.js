@@ -7,6 +7,7 @@ const PORT = process.env.PORT || 3000;
 const express = require('express');
 const superagent = require('superagent');
 const pg = require('pg');
+const methodoverride = require('method-override');
 
 const app = express();
 app.use(express.static('./public')); //for the purposes of our site, public is the root folder
@@ -42,7 +43,7 @@ app.get('/test', (request, response) => {
 });
 
 //===============================
-// SQL
+// SQL 
 //===============================
 
 const SQL = {};
@@ -76,7 +77,7 @@ function handleError(error, response) {
 
 function renderHomepage(request, response) {
   client.query(SQL.getAll).then(result => {
-    //first parameter indicates where content will be rendered, second parameter indicates retrived data from table.
+    //first parameter indicates where content will be rendered, second parameter indicates retrieved data from table.
     response.render('pages/index.ejs', { savedBooksArr: result.rows });
   }).catch(error => handleError(error, response));
 }
@@ -111,12 +112,15 @@ function bookSearch(request, response) {
 
 function saveToLibrary(request, response) {
   const { title, author, description, image_url, isbn, bookshelf } = request.body;
+  //object destructuring
+  // const title = request.body.title; 
+  //const author = request.body.author; 
   //saves the selected book information to the database
   client.query(SQL.saveBookToDatabase, [title, author, description, image_url, isbn, bookshelf]).then(result => {
     client.query(SQL.getLast).then(result => {
       const id = result.rows[0].id;
       response.redirect(`/books/${id}`);
-    })
+    }).catch(error => handleError(error, response));
   }).catch(error => handleError(error, response));
 }
 
