@@ -1,3 +1,5 @@
+CREATE DATABASE books_app;
+
 DROP TABLE IF EXISTS saved_books;
 
 CREATE TABLE saved_books (
