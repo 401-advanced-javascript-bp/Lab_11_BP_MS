@@ -7,7 +7,7 @@ const PORT = process.env.PORT || 3000;
 const express = require('express');
 const superagent = require('superagent');
 const pg = require('pg');
-const methodoverride = require('method-override');
+const methodOverride = require('method-override');
 
 const app = express();
 app.use(express.static('./public')); //for the purposes of our site, public is the root folder
@@ -18,6 +18,16 @@ const client = new pg.Client(process.env.DATABASE_URL);
 client.on('error', error => console.error(error));
 client.connect();
 
+app.use(methodOverride((request, response)=> {
+  if (request.body && typeof request.body === 'object' && '_method' in request.body) {
+    //look in the urlencoded POST body and delete _method
+    //change to a put or delete
+    let method = request.body._method;
+    delete request.body._method;
+    return method;
+  }
+}))
+
 //===============================
 // Routes
 //===============================
@@ -27,6 +37,12 @@ app.get('/', renderHomepage);
 
 //renders detail view
 app.get('/books/:id', renderDetailView);
+
+
+app.put('/books/:id', updateBookDetails);
+
+
+app.delete('/book/:id', deleteBook);
 
 //render this form at this route
 app.get('/new_search', searchForm);
@@ -52,6 +68,10 @@ SQL.getById = 'SELECT * FROM saved_books WHERE id=$1;';
 SQL.saveBookToDatabase = 'INSERT INTO saved_books (title, author, description, image_url, isbn, bookshelf) VALUES ($1, $2, $3, $4, $5, $6);';
 //this command grabs the last single saved entry from the table
 SQL.getLast = 'SELECT * FROM saved_books ORDER BY id DESC LIMIT 1;';
+
+SQL.updateDetails = 'UPDATE saved_books SET title=$1, author=$2, description=$3, image_url=$4, isbn=$5, bookshelf=$6, WHERE id=$7;';
+
+SQL.deleteBook = 'DELETE FROM saved_books WHERE id=$1;';
 
 //===============================
 // Constructor
@@ -122,6 +142,22 @@ function saveToLibrary(request, response) {
       response.redirect(`/books/${id}`);
     }).catch(error => handleError(error, response));
   }).catch(error => handleError(error, response));
+}
+
+function updateBookDetails(request, response) {
+  const selected = parseInt(request.params.id);
+  const {title, author, description, image_url, isbn, bookshelf } = request.body;
+
+  client.query(SQL.updateDetails, [title, author, description, image_url, isbn, bookshelf, selected]).then(result => {
+    response.redirect('/');
+  })
+}
+
+function deleteBook(request, response) {
+  const selected = parseInt(request.params.id);
+  client.query(SQL.deleteBook, [selected]).then(result => {
+    response.redirect('/');
+  })
 }
 
 //===============================
