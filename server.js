@@ -1,32 +1,27 @@
 'use strict';
 
 require('dotenv').config();
+console.log('PROCESS VARS: ', process.env)
 
 const PORT = process.env.PORT || 3000;
 
 const express = require('express');
 const superagent = require('superagent');
 const pg = require('pg');
-const methodOverride = require('method-override');
+const mw = require('./middleware/middleware.js');
 
 const app = express();
+
 app.use(express.static('./public')); //for the purposes of our site, public is the root folder
 app.use(express.urlencoded({ extended: true }));
+
+app.use(mw.override);
+
 app.set('view-engine', 'ejs');
 
 const client = new pg.Client(process.env.DATABASE_URL);
 client.on('error', error => console.error(error));
 client.connect();
-
-app.use(methodOverride((request, response)=> {
-  if (request.body && typeof request.body === 'object' && '_method' in request.body) {
-    //look in the urlencoded POST body and delete _method
-    //change to a put or delete
-    let method = request.body._method;
-    delete request.body._method;
-    return method;
-  }
-}))
 
 //===============================
 // Routes
@@ -136,6 +131,8 @@ function saveToLibrary(request, response) {
   // const title = request.body.title; 
   //const author = request.body.author; 
   //saves the selected book information to the database
+  const dataToSave = [title, author, description, image_url, isbn, bookshelf];
+  console.log('PRE SAVE DATA: ', dataToSave);
   client.query(SQL.saveBookToDatabase, [title, author, description, image_url, isbn, bookshelf]).then(result => {
     client.query(SQL.getLast).then(result => {
       const id = result.rows[0].id;
@@ -162,4 +159,8 @@ function deleteBook(request, response) {
 
 //===============================
 
-app.listen(PORT, () => { console.log(`App is up on PORT ${PORT}`) });
+const start = () => app.listen(PORT, () => { console.log(`App is up on PORT ${PORT}`) });
+
+module.exports = {
+  start
+};
