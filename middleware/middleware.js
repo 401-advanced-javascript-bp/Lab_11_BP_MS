@@ -1,6 +1,8 @@
 'use strict';
 //requires the method-override dependecy
 const methodOverride = require('method-override');
+// const express = require('express');
+// const app = express();
 
 module.exports = {
   override: (request, response, next) => {
@@ -13,7 +15,15 @@ module.exports = {
         return method;
       }
     })
-  }
+  },
+  // urlencoded: (request, response, next) => {
+  //   return (express.urlencoded({ extended: true })),
+  // },
+
+  // static: (request, response, next) => {
+  //   return (express.static('../public/')),
+  // }, //for the purposes of our site, public is the root folder
+
 }
 
 

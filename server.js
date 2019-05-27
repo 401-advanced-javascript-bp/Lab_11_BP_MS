@@ -4,7 +4,7 @@ require('dotenv').config();
 console.log('PROCESS VARS: ', process.env)
 
 const PORT = process.env.PORT || 3000;
-
+//app dependencies
 const express = require('express');
 const superagent = require('superagent');
 const pg = require('pg');
@@ -12,11 +12,12 @@ const mw = require('./middleware/middleware.js');
 
 const app = express();
 
-app.use(express.static('./public')); //for the purposes of our site, public is the root folder
-app.use(express.urlencoded({ extended: true }));
+app.use(express.static('./public'));
+app.use(express.urlencoded({ extended: true}));
 
 app.use(mw.override);
 
+//set the view engine for server-side templating
 app.set('view-engine', 'ejs');
 
 const client = new pg.Client(process.env.DATABASE_URL);
@@ -36,7 +37,7 @@ app.get('/books/:id', renderDetailView);
 
 app.put('/books/:id', updateBookDetails);
 
-
+//'book' ok? or should it be 'books'?
 app.delete('/book/:id', deleteBook);
 
 //render this form at this route
@@ -162,5 +163,9 @@ function deleteBook(request, response) {
 const start = () => app.listen(PORT, () => { console.log(`App is up on PORT ${PORT}`) });
 
 module.exports = {
-  start
+  start, app
 };
+// module.exports = {
+//   server: app,
+//   start: (port) => app.listen(port, () => console.log(`Server up on port ${port}`) ),
+// };
